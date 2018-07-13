@@ -2,7 +2,8 @@
 <html>
     <head>
         <title>Hey - @yield('title', 'Hey App')</title>
-        <link rel="stylesheet" href="/css/app.css">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     </head>
     <body>
         @include('layouts._header')
@@ -13,7 +14,7 @@
                 @include('layouts._footer')
             </div>
         </div>
-
+        <script src="{{ asset('js/app.js') }}" ></script>
     </body>
 </html>
 
