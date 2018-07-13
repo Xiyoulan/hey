@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Models\User;
 use Illuminate\Http\Request;
@@ -10,7 +10,7 @@ class UserController extends Controller {
 
     public function __construct() {
         $this->middleware('auth', [
-            'except' => ['show', 'create', 'store', 'index']
+            'except' => ['show', 'create', 'store', 'index','confirmEmail']
         ]);
         $this->middleware('guest', [
             'only' => ['create']
@@ -41,9 +41,9 @@ class UserController extends Controller {
                     'email' => $request->input('email'),
                     'password' => bcrypt($request->input('password')),
         ]);
-        Auth::login($user);
-        session()->flash('success', '欢迎，您将在这里开启一段新的旅程~');
-        return redirect()->route('users.show', [$user]);
+        $this->sendEmailConfirmationTo($user);
+        session()->flash('success', '验证邮件已发送到你的注册邮箱上，请注意查收。');
+        return redirect('/');
     }
 
     public function edit(User $user) {
@@ -76,5 +76,27 @@ class UserController extends Controller {
         session()->flash('success', "成功删除用户  [$name]  !");
         return back();
     }
+   public function confirmEmail($token){
+      $user=User::where('activation_token',$token)->firstOrFail();
+      $user->activated=true;
+      $user->activation_token=null;
+      $user->save();
+      
+      Auth::login($user);
+      session()->flash('success','恭喜您,激活成功!');
+      return redirect()->route('users.show', $user->id);
+      
+  }
+  protected function sendEmailConfirmationTo($user)
+    {
+        $view = 'emails.confirm';
+        $data = compact('user');
+        $name = 'Xiyoulan';
+        $to = $user->email;
+        $subject = "感谢注册 Hey 应用！请确认你的邮箱。";
 
+        Mail::send($view, $data, function ($message) use ($from, $name, $to, $subject) {
+            $message->to($to)->subject($subject);
+        });
+    }
 }
