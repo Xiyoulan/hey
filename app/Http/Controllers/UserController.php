@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Models\User;
@@ -10,7 +11,7 @@ class UserController extends Controller {
 
     public function __construct() {
         $this->middleware('auth', [
-            'except' => ['show', 'create', 'store', 'index','confirmEmail']
+            'except' => ['show', 'create', 'store', 'index', 'confirmEmail']
         ]);
         $this->middleware('guest', [
             'only' => ['create']
@@ -27,8 +28,8 @@ class UserController extends Controller {
     }
 
     public function show(User $user) {
-        $statuses =$user->statuses()->orderBy('created_at','desc')->paginate(30);
-        return view('users.show', compact('user','statuses'));
+        $statuses = $user->statuses()->orderBy('created_at', 'desc')->paginate(30);
+        return view('users.show', compact('user', 'statuses'));
     }
 
     public function store(Request $request) {
@@ -72,24 +73,42 @@ class UserController extends Controller {
     }
 
     public function destroy(User $user) {
-        $name=$user->name;
+        $name = $user->name;
         $user->delete();
         session()->flash('success', "成功删除用户  [$name]  !");
         return back();
     }
-   public function confirmEmail($token){
-      $user=User::where('activation_token',$token)->firstOrFail();
-      $user->activated=true;
-      $user->activation_token=null;
-      $user->save();
-      
-      Auth::login($user);
-      session()->flash('success','恭喜您,激活成功!');
-      return redirect()->route('users.show', $user->id);
-      
-  }
-  protected function sendEmailConfirmationTo($user)
-    {
+
+    public function confirmEmail($token) {
+        $user = User::where('activation_token', $token)->firstOrFail();
+        $user->activated = true;
+        $user->activation_token = null;
+        $user->save();
+
+        Auth::login($user);
+        session()->flash('success', '恭喜您,激活成功!');
+        return redirect()->route('users.show', $user->id);
+    }
+
+    public function followers(User $user) {
+        $users = $user->followers()->paginate(15);
+        $title = $user->name."的粉丝";
+        if($user->id === Auth::id()){
+           $title="我的粉丝"; 
+        }
+        return view('users.show_follow', compact('users', 'title','user'));
+    }
+
+    public function followings(User $user) {
+        $users = $user->followings()->paginate(15);
+        $title = $user->name."关注的人";
+        if($user->id === Auth::id()){
+           $title="我关注的人"; 
+        }
+        return view('users.show_follow', compact('users', 'title','user'));
+    }
+
+    protected function sendEmailConfirmationTo($user) {
         $view = 'emails.confirm';
         $data = compact('user');
         $name = 'Xiyoulan';
@@ -100,4 +119,5 @@ class UserController extends Controller {
             $message->to($to)->subject($subject);
         });
     }
+
 }
