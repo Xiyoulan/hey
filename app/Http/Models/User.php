@@ -18,6 +18,10 @@ class User extends Authenticatable {
         'name', 'email', 'password',
     ];
 
+    public function statuses()
+    {   
+        return $this->hasMany(Status::class);
+    }
     public static function boot() {
         parent::boot();
         static::creating(function($user) {
@@ -48,4 +52,8 @@ class User extends Authenticatable {
         $this->notify(new ResetPassword($token));
     }
 
+    public function feed(){
+        return $this->statuses()
+                ->orderBy('created_at','desc');
+    }
 }
