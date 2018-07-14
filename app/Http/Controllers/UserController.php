@@ -73,6 +73,12 @@ class UserController extends Controller {
     }
 
     public function destroy(User $user) {
+        //删除用户的同时删除用户的微博,关注的人以及粉丝
+        //1.删除用户微博
+        $user->statuses()->delete();
+        //2.取消用户的粉丝和关注的人
+        $user->followings()->detach();
+        $user->followers()->detach();
         $name = $user->name;
         $user->delete();
         session()->flash('success', "成功删除用户  [$name]  !");
@@ -115,7 +121,7 @@ class UserController extends Controller {
         $to = $user->email;
         $subject = "感谢注册 Hey 应用！请确认你的邮箱。";
 
-        Mail::send($view, $data, function ($message) use ($from, $name, $to, $subject) {
+        Mail::send($view, $data, function ($message) use ($name, $to, $subject) {
             $message->to($to)->subject($subject);
         });
     }
